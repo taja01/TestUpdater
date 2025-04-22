@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestParser", "TestParser\TestParser.csproj", "{FAEC43FE-F951-477C-9C22-133CEC328E23}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestRunner", "TestRunner\TestRunner.csproj", "{84025574-7B2E-445C-8CE1-453873B72975}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{FAEC43FE-F951-477C-9C22-133CEC328E23}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FAEC43FE-F951-477C-9C22-133CEC328E23}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FAEC43FE-F951-477C-9C22-133CEC328E23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84025574-7B2E-445C-8CE1-453873B72975}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84025574-7B2E-445C-8CE1-453873B72975}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84025574-7B2E-445C-8CE1-453873B72975}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84025574-7B2E-445C-8CE1-453873B72975}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
