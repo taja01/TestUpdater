@@ -12,7 +12,7 @@ namespace TestCaseUpdater
             string personalAccessToken = ""; // PAT Token
 
             // Initialize Azure DevOps Service
-            AzureDevOpsService adoService = new AzureDevOpsService(organization, project, personalAccessToken);
+            AzureDevOpsService adoService = new(organization, project, personalAccessToken);
 
             // Define Test Steps
             var testSteps = new List<TestStep> {  new()
