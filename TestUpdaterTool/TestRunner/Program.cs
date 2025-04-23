@@ -1,41 +1,51 @@
-﻿using Common;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using TestCaseUpdater;
+using TestParser;
 
 namespace TestRunner
 {
-    internal class Program
+    public class Program
     {
-        static async Task Main()
+        public static async Task Main(string[] args)
         {
-            // Configuration Parameters
-            string organization = "TamasJarvas";          // Azure DevOps Organization
-            string project = "Sandbox";                    // Azure DevOps Project
-            string personalAccessToken = ""; // PAT Token
-
-            // Initialize Azure DevOps Service
-            AzureDevOpsService adoService = new(organization, project, personalAccessToken);
-
-            // Define Test Steps
-            var testSteps = new List<TestStep> {  new()
+            // Create a new HostBuilder
+            IHost host = Host.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((hostingContext, config) =>
                 {
-                    Action = "Given I am in the main page",
-                    Expected = "Main page loaded"
-                },
-                new()
+                    // Optionally set BasePath and specify the json file(s)
+                    config.SetBasePath(Directory.GetCurrentDirectory());
+                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    // Also add environment variables or other configuration sources if needed.
+                    config.AddEnvironmentVariables();
+                })
+                .ConfigureServices((context, services) =>
                 {
-                    Action = "When I click login button",
-                    Expected = "Login popup appears"
-                }
-            };
+                    // Bind AzureOptions to the "AzureOptions" section of appsettings.json
+                    services.Configure<AzureOptions>(context.Configuration.GetSection("AzureOptions"));
 
-            // Test Case ID
-            int testCaseId = 14;
+                    // Register your service dependencies.
+                    services.AddSingleton<IFileHandler, FileHandler>();
+                    services.AddSingleton<ITestUpdateService, AzureDevOpsService>();
+                    services.AddSingleton<ITestCaseParser, TypeScriptParserV2>();
+                    services.AddSingleton<ITestProcessor, TestProcessor>();
 
-            // Update test case steps
-            await adoService.UpdateTestCaseStepsAsync(testCaseId, testSteps, "My Test Title 2");
+                    // Register the runner as a Hosted Service
+                    services.AddHostedService<Runner>();
 
-            // Dispose resources
-            adoService.Dispose();
+                    // (Optional) add logging configuration here or use defaults.
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                })
+                .Build();
+
+            // Run the host. This will call the IHostedService implementations.
+            await host.RunAsync();
         }
     }
 }
