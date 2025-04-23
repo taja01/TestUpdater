@@ -1,4 +1,5 @@
 ﻿using Common;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
@@ -9,11 +10,12 @@ namespace TestCaseUpdater
     {
         private readonly AzureOptions _options;
         private readonly HttpClient _httpClient;
+        private readonly ILogger<AzureDevOpsService> _logger;
 
-        public AzureDevOpsService(HttpClient httpClient, IOptions<AzureOptions> options)
+        public AzureDevOpsService(HttpClient httpClient, IOptions<AzureOptions> options, ILogger<AzureDevOpsService> logger)
         {
+            _logger = logger;
             _options = options.Value;
-
             _httpClient = httpClient;
             _httpClient.BaseAddress = new Uri($"https://dev.azure.com/{_options.Organization}/{_options.Project}/_apis/");
 
@@ -22,6 +24,8 @@ namespace TestCaseUpdater
             var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{_options.PersonalAccessToken}"));
             _httpClient.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
+
+            _logger.LogInformation("AzureDevOpsService initialized.");
         }
 
         /// <summary>
@@ -58,17 +62,19 @@ namespace TestCaseUpdater
 
                 if (response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"Test case {testCaseId} updated successfully with steps.");
+                    _logger.LogInformation("Test Case ID {TestCaseId} updated successfully.", testCaseId);
                 }
                 else
                 {
                     string errorMessage = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Error updating test case {testCaseId}: {response.StatusCode}\n{errorMessage}");
+                    _logger.LogError("Failed to update Test Case ID {TestCaseId}. Status Code: {StatusCode}. Error: {Error}",
+                    testCaseId, response.StatusCode, errorMessage);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Exception while updating test case: {ex.Message}");
+                _logger.LogCritical(ex, "An error occurred while updating Test Case ID {TestCaseId}.", testCaseId);
+                throw;
             }
         }
 
