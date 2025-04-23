@@ -21,7 +21,20 @@ After call, you can find all your fields
 like: "referenceName": "Microsoft.VSTS.TCM.AutomationStatus", (in xml I use it as /fields/Microsoft.VSTS.TCM.AutomationStatus)
 
 ##TypeScript - PlayWright
-TODO: finish it
-TODO: add example
-TODO: add tests
-TODO: move project variables into appsettings.json
+Two version added
+1. using regex
+2. using regex but spliting by 'test('
+Title and TestCaseId are parsed
+
+Example:
+[22:44:15 DBG] Title: Verify search operation on the site
+[22:44:15 DBG] TestCaseId: 14
+[22:44:15 DBG]   Action: Navigate to the search page
+[22:44:15 DBG]   Expected:
+[22:44:15 DBG]   Action: Click on the "More information..." link
+[22:44:15 DBG]   Expected:
+[22:44:15 DBG]   Action:
+[22:44:15 DBG]   Expected: Verify URL changes after clicking the link
+
+TODO: add reqnroll parser
+TODO: try other tools than azure
