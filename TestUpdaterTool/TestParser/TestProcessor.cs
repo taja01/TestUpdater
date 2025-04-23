@@ -1,7 +1,6 @@
 ﻿namespace TestParser
 {
-    // Handles business logic for processing files
-    public class TestProcessor(IFileHandler fileHandler, ITestCaseParser parser)
+    public class TestProcessor(IFileHandler fileHandler, ITestCaseParser parser) : ITestProcessor
     {
         private readonly IFileHandler _fileHandler = fileHandler;
         private readonly ITestCaseParser _parser = parser;
@@ -25,7 +24,7 @@
             var content = _fileHandler.ReadFileContent(filePath);
             var parsedTests = _parser.ParseFile(content);
 
-            DisplayParsedTests(parsedTests); // Optional logging/display functionality
+            DisplayParsedTests(parsedTests);
             return parsedTests;
         }
 
