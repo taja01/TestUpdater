@@ -1,31 +1,29 @@
 ﻿using Common;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using System.Net.Http.Headers;
 using System.Text;
 
 namespace TestCaseUpdater
 {
-    public class AzureDevOpsService
+    public class AzureDevOpsService : ITestUpdateService
     {
-        private readonly string _organization;
-        private readonly string _project;
-        private readonly string _personalAccessToken;
+        private readonly AzureOptions _options;
         private readonly HttpClient _httpClient;
 
-        public AzureDevOpsService(string organization, string project, string personalAccessToken)
+        public AzureDevOpsService(IOptions<AzureOptions> options)
         {
-            _organization = organization ?? throw new ArgumentNullException(nameof(organization));
-            _project = project ?? throw new ArgumentNullException(nameof(project));
-            _personalAccessToken = personalAccessToken ?? throw new ArgumentNullException(nameof(personalAccessToken));
+            _options = options.Value;
 
             // Initialize HttpClient
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                "Basic",
-                Convert.ToBase64String(Encoding.ASCII.GetBytes($":{_personalAccessToken}"))
-            );
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new Uri($"https://dev.azure.com/{_options.Organization}/{_options.Project}/_apis/")
+            };
+
+            // Add authorization header using the PAT
+            var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{_options.PersonalAccessToken}"));
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
         }
 
         /// <summary>
@@ -42,7 +40,7 @@ namespace TestCaseUpdater
                 throw new ArgumentException("Test steps cannot be null or empty.");
             }
 
-            string url = $"https://dev.azure.com/{_organization}/{_project}/_apis/wit/workitems/{testCaseId}?api-version=7.1-preview.3";
+            string url = $"https://dev.azure.com/{_options.Organization}/{_options.Project}/_apis/wit/workitems/{testCaseId}?api-version=7.1-preview.3";
 
             // Build test steps string in format understood by Azure DevOps
             var stepsFieldValue = BuildTestStepsValue(testSteps);
@@ -110,11 +108,6 @@ namespace TestCaseUpdater
 
             xmlBuilder.Append("</steps>");
             return xmlBuilder.ToString();
-        }
-
-        public void Dispose()
-        {
-            _httpClient.Dispose();
         }
     }
 }
