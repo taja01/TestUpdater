@@ -1,13 +1,12 @@
-﻿namespace TestParser
-{
-    public class TestProcessor(IFileHandler fileHandler, ITestCaseParser parser) : ITestProcessor
-    {
-        private readonly IFileHandler _fileHandler = fileHandler;
-        private readonly ITestCaseParser _parser = parser;
+﻿using Microsoft.Extensions.Logging;
 
+namespace TestParser
+{
+    public class TestProcessor(IFileHandler fileHandler, ITestCaseParser parser, ILogger<TestProcessor> logger) : ITestProcessor
+    {
         public List<ParsedTest> ProcessFiles(string folderPath)
         {
-            var files = _fileHandler.GetFiles(folderPath, _parser.FilePattern);
+            var files = fileHandler.GetFiles(folderPath, parser.FilePattern);
             var result = new List<ParsedTest>();
 
             foreach (var file in files)
@@ -20,15 +19,15 @@
 
         private List<ParsedTest> ProcessFile(string filePath)
         {
-            Console.WriteLine($"Processing file: {filePath}");
-            var content = _fileHandler.ReadFileContent(filePath);
-            var parsedTests = _parser.ParseFile(content);
+            logger.LogInformation("Processing file: {filePath}", filePath);
+            var content = fileHandler.ReadFileContent(filePath);
+            var parsedTests = parser.ParseFile(content);
 
             DisplayParsedTests(parsedTests);
             return parsedTests;
         }
 
-        private static void DisplayParsedTests(IEnumerable<ParsedTest> tests)
+        private void DisplayParsedTests(IEnumerable<ParsedTest> tests)
         {
             foreach (var test in tests)
             {
@@ -36,16 +35,18 @@
             }
         }
 
-        private static void DisplayParsedTest(ParsedTest parsedTest)
+        private void DisplayParsedTest(ParsedTest parsedTest)
         {
-            Console.WriteLine($"Title: {parsedTest.Title}");
-            Console.WriteLine($"TestCaseId: {parsedTest.TestCaseId}");
+            logger.LogDebug("Title: {Title}", parsedTest.Title);
+            logger.LogDebug("TestCaseId: {TestCaseId}", parsedTest.TestCaseId);
+
             foreach (var step in parsedTest.Steps)
             {
-                Console.WriteLine($"  Action: {step.Action}");
-                Console.WriteLine($"  Expected: {step.Expected}");
+                logger.LogDebug("  Action: {Action}", step.Action);
+                logger.LogDebug("  Expected: {Expected}", step.Expected);
             }
-            Console.WriteLine(new string('-', 50));
+
+            logger.LogDebug(new string('-', 50));
         }
     }
 }
