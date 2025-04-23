@@ -23,8 +23,8 @@ namespace TestRunner
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    // Bind AzureOptions to the "AzureOptions" section of appsettings.json
                     services.Configure<AzureOptions>(context.Configuration.GetSection("AzureOptions"));
+                    services.AddHttpClient<AzureDevOpsService>();
 
                     // Register your service dependencies.
                     services.AddSingleton<IFileHandler, FileHandler>();

@@ -10,15 +10,13 @@ namespace TestCaseUpdater
         private readonly AzureOptions _options;
         private readonly HttpClient _httpClient;
 
-        public AzureDevOpsService(IOptions<AzureOptions> options)
+        public AzureDevOpsService(HttpClient httpClient, IOptions<AzureOptions> options)
         {
             _options = options.Value;
 
-            // Initialize HttpClient
-            _httpClient = new HttpClient
-            {
-                BaseAddress = new Uri($"https://dev.azure.com/{_options.Organization}/{_options.Project}/_apis/")
-            };
+            _httpClient = httpClient;
+            _httpClient.BaseAddress = new Uri($"https://dev.azure.com/{_options.Organization}/{_options.Project}/_apis/");
+
 
             // Add authorization header using the PAT
             var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{_options.PersonalAccessToken}"));
