@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Serilog;
 using TestCaseUpdater;
 using TestParser;
 
@@ -11,41 +11,70 @@ namespace TestRunner
     {
         public static async Task Main(string[] args)
         {
-            // Create a new HostBuilder
-            IHost host = Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((hostingContext, config) =>
-                {
-                    // Optionally set BasePath and specify the json file(s)
-                    config.SetBasePath(Directory.GetCurrentDirectory());
-                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-                    // Also add environment variables or other configuration sources if needed.
-                    config.AddEnvironmentVariables();
-                })
-                .ConfigureServices((context, services) =>
-                {
-                    services.Configure<AzureOptions>(context.Configuration.GetSection("AzureOptions"));
-                    services.AddHttpClient<AzureDevOpsService>();
+            // Configure Serilog
+            ////Log.Logger = new LoggerConfiguration()
+            ////    .MinimumLevel.Debug() // Set default log level
+            ////    .ReadFrom.Configuration(new ConfigurationBuilder()
+            ////        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true) // Read configuration from appsettings.json
+            ////        .AddEnvironmentVariables()
+            ////        .Build()
+            ////    )
+            ////    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
 
-                    // Register your service dependencies.
-                    services.AddSingleton<IFileHandler, FileHandler>();
-                    services.AddSingleton<ITestUpdateService, AzureDevOpsService>();
-                    services.AddSingleton<ITestCaseParser, TypeScriptParserV2>();
-                    services.AddSingleton<ITestProcessor, TestProcessor>();
+            ////    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
+            ////    .CreateLogger();
 
-                    // Register the runner as a Hosted Service
-                    services.AddHostedService<Runner>();
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true) // Read configuration from appsettings.json
+                .AddEnvironmentVariables()
+                .Build()
+                )
+                .CreateLogger();
+            // Build and run the host
+            try
+            {
+                Log.Information("Starting application...");
 
-                    // (Optional) add logging configuration here or use defaults.
-                })
-                .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
-                    logging.AddConsole();
-                })
-                .Build();
+                var host = Host.CreateDefaultBuilder(args)
+                    .UseSerilog() // Replace default logging with Serilog
+                    .ConfigureAppConfiguration((hostingContext, config) =>
+                    {
+                        // Configuration sources
+                        config.SetBasePath(Directory.GetCurrentDirectory());
+                        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                        config.AddEnvironmentVariables();
+                    })
+                    .ConfigureServices((context, services) =>
+                    {
+                        // Configure AzureDevOps options
+                        services.Configure<AzureOptions>(context.Configuration.GetSection("AzureOptions"));
 
-            // Run the host. This will call the IHostedService implementations.
-            await host.RunAsync();
+                        // Register HttpClientFactory for AzureDevOpsService
+                        services.AddHttpClient<AzureDevOpsService>();
+
+                        // Register application services
+                        services.AddSingleton<IFileHandler, FileHandler>();
+                        services.AddSingleton<ITestUpdateService, AzureDevOpsService>();
+                        services.AddSingleton<ITestCaseParser, TypeScriptParserV2>();
+                        services.AddSingleton<ITestProcessor, TestProcessor>();
+
+                        // Add the runner as a hosted service
+                        services.AddHostedService<Runner>();
+                    })
+                    .Build();
+
+                // Run the host
+                await host.RunAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Application terminated unexpectedly.");
+            }
+            finally
+            {
+                Log.CloseAndFlush(); // Ensure all logs are written before application exits
+            }
         }
     }
 }
