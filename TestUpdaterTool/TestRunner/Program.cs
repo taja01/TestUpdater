@@ -55,12 +55,14 @@ namespace TestRunner
 
                         // Register application services
                         services.AddSingleton<IFileHandler, FileHandler>();
+                        services.AddSingleton<ITestProcessor, TestProcessor>();
+
+                        // Test services
                         services.AddSingleton<ITestUpdateService, AzureDevOpsService>();
 
                         // Parsers
                         services.AddSingleton<ITestCaseParser, TypeScriptParserV2>();
                         ////  services.AddSingleton<ITestCaseParser, ReqnRollParser>();
-                        services.AddSingleton<ITestProcessor, TestProcessor>();
 
                         // Add the runner as a hosted service
                         services.AddHostedService<Runner>();

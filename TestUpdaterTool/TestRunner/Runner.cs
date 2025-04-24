@@ -12,7 +12,7 @@ namespace TestRunner
             logger.LogInformation("Runner is starting the service.");
 
             string projectDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
-            string path = Path.Combine(projectDirectory, "example", "typeScript"); //reqnroll
+            string path = Path.Combine(projectDirectory, "example", "typeScript"); //reqnroll typeScript
             var testCases = testProcessor.ProcessFiles(path);
 
             foreach (var testCase in testCases)
