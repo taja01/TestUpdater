@@ -20,8 +20,8 @@ namespace TestParser
         private List<ParsedTest> ProcessFile(string filePath)
         {
             logger.LogInformation("Processing file: {filePath}", filePath);
-            var content = fileHandler.ReadFileContent(filePath);
-            var parsedTests = parser.ParseFile(content);
+
+            var parsedTests = parser.ParseFile(filePath);
 
             DisplayParsedTests(parsedTests);
             return parsedTests;

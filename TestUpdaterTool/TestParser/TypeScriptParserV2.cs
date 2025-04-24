@@ -2,7 +2,7 @@
 
 namespace TestParser
 {
-    public class TypeScriptParserV2 : TypeScriptParserBase, ITestCaseParser
+    public class TypeScriptParserV2(IFileHandler fileHandler) : TypeScriptParserBase, ITestCaseParser
     {
         public string FilePattern => "*.system.spec.ts";
 
@@ -16,10 +16,10 @@ namespace TestParser
             return [.. segments];
         }
 
-        public List<ParsedTest> ParseFile(string fileContent)
+        public List<ParsedTest> ParseFile(string filePath)
         {
             var parsedTests = new List<ParsedTest>();
-
+            var fileContent = fileHandler.ReadFileContent(filePath);
             var testBlocks = ExtractTestCases(fileContent);
             foreach (var testBlock in testBlocks)
             {
