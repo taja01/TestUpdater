@@ -14,91 +14,138 @@ namespace TestParser
             var parser = new Parser();
             var gherkinDocument = parser.Parse(path);
 
-            return processGherkinDocument(gherkinDocument);
+            return ProcessGherkinDocument(gherkinDocument);
         }
 
-        private List<ParsedTest> processGherkinDocument(Gherkin.Ast.GherkinDocument gherkinDocument)
+        private static List<ParsedTest> ProcessGherkinDocument(Gherkin.Ast.GherkinDocument gherkinDocument)
         {
             var parsedTests = new List<ParsedTest>();
 
-            var backgroundSteps = new ParsedTest();
+            // Parse Background steps
+            var backgroundSteps = ParseBackgroundSteps(gherkinDocument);
 
-            var backgroundRaw = gherkinDocument.Feature.Children.FirstOrDefault(x => x is Gherkin.Ast.Background);
-            if (backgroundRaw != null)
-            {
-                var background = backgroundRaw as Background;
-                foreach (var backgroundStep in background.Steps)
-                {
-                    backgroundSteps.Steps.Add(new TestStep { Action = backgroundStep.Text, Expected = string.Empty });
-                }
-            }
-
+            // Parse Scenarios
             foreach (var scenarioRaw in gherkinDocument.Feature.Children.Where(x => x is Gherkin.Ast.Scenario))
             {
-                var scenario = scenarioRaw as Gherkin.Ast.Scenario;
-                var parsedScenario = new ParsedTest();
-                parsedScenario.Steps.AddRange(backgroundSteps.Steps);
-
-                parsedScenario.Title = scenario.Name;
-                var tcTag = scenario.Tags.FirstOrDefault(x => x.Name.StartsWith("@TC", StringComparison.OrdinalIgnoreCase)).Name;
-
-                if (int.TryParse(tcTag[3..], out int value))
+                if (scenarioRaw is Gherkin.Ast.Scenario scenario)
                 {
-                    parsedScenario.TestCaseId = value;
+                    var parsedScenario = ParseScenario(scenario, backgroundSteps);
+                    parsedTests.Add(parsedScenario);
                 }
-
-                var mainStepKeywordType = StepKeywordType.Context;
-
-                foreach (var scenarioStep in scenario.Steps)
-                {
-                    if (scenarioStep.KeywordType == StepKeywordType.Action || scenarioStep.KeywordType == StepKeywordType.Context)
-                    {
-                        mainStepKeywordType = StepKeywordType.Action;
-                        AddActionStep(scenarioStep.Text, parsedScenario);
-                    }
-                    else if (scenarioStep.KeywordType == StepKeywordType.Outcome)
-                    {
-                        mainStepKeywordType = StepKeywordType.Outcome;
-                        AddValidationStep(scenarioStep.Text, parsedScenario);
-                    }
-                    else
-                    {
-                        if (mainStepKeywordType == StepKeywordType.Outcome)
-                        {
-                            AddValidationStep(scenarioStep.Text, parsedScenario);
-                        }
-                        else
-                        {
-                            AddActionStep(scenarioStep.Text, parsedScenario);
-                        }
-                    }
-                }
-                parsedTests.Add(parsedScenario);
             }
 
             return parsedTests;
         }
 
-        private void AddValidationStep(string text, ParsedTest parsedScenario)
+        private static List<TestStep> ParseBackgroundSteps(Gherkin.Ast.GherkinDocument gherkinDocument)
         {
-            if (string.IsNullOrEmpty(parsedScenario.Steps.Last().Expected))
+            var backgroundSteps = new List<TestStep>();
+
+            // Extract Background steps if present in the document
+
+            if (gherkinDocument.Feature.Children
+                .FirstOrDefault(child => child is Gherkin.Ast.Background) is Background backgroundRaw)
+            {
+                foreach (var step in backgroundRaw.Steps)
+                {
+                    backgroundSteps.Add(new TestStep
+                    {
+                        Action = step.Text,
+                        Expected = string.Empty
+                    });
+                }
+            }
+
+            return backgroundSteps;
+        }
+
+        private static ParsedTest ParseScenario(Gherkin.Ast.Scenario scenario, List<TestStep> backgroundSteps)
+        {
+            var parsedScenario = new ParsedTest();
+
+            // Add background steps
+            parsedScenario.Steps.AddRange(backgroundSteps);
+
+            // Set Title and TestCaseId from Scenario tags
+            parsedScenario.Title = scenario.Name;
+            parsedScenario.TestCaseId = GetTestCaseIdFromTags(scenario.Tags);
+
+            // Process the steps in the scenario
+            ParseScenarioSteps(scenario.Steps, parsedScenario);
+
+            return parsedScenario;
+        }
+
+        private static int? GetTestCaseIdFromTags(IEnumerable<Tag> tags)
+        {
+            // Search for the @TC<id> tag and extract the ID
+            var testCaseTag = tags.FirstOrDefault(tag => tag.Name.StartsWith("@TC", StringComparison.OrdinalIgnoreCase));
+            if (testCaseTag != null && int.TryParse(testCaseTag.Name[3..], out int testCaseId))
+            {
+                return testCaseId;
+            }
+            return null;
+        }
+
+        private static void ParseScenarioSteps(IEnumerable<Step> steps, ParsedTest parsedScenario)
+        {
+            // Keep track of the current main keyword type (Action, Context, or Outcome)
+            var mainStepKeywordType = StepKeywordType.Context;
+
+            foreach (var step in steps)
+            {
+                switch (step.KeywordType)
+                {
+                    case StepKeywordType.Context:
+                    case StepKeywordType.Action:
+                        mainStepKeywordType = StepKeywordType.Action;
+                        AddActionStep(step.Text, parsedScenario);
+                        break;
+
+                    case StepKeywordType.Outcome:
+                        mainStepKeywordType = StepKeywordType.Outcome;
+                        AddValidationStep(step.Text, parsedScenario);
+                        break;
+
+                    default:
+                        // Use previous keyword type (Action or Outcome) to determine step type
+                        if (mainStepKeywordType == StepKeywordType.Outcome)
+                        {
+                            AddValidationStep(step.Text, parsedScenario);
+                        }
+                        else
+                        {
+                            AddActionStep(step.Text, parsedScenario);
+                        }
+                        break;
+                }
+            }
+        }
+
+        private static void AddValidationStep(string text, ParsedTest parsedScenario)
+        {
+            // If the last step has no Expected value, add it to the last step
+            if (parsedScenario.Steps.Count > 0 && string.IsNullOrEmpty(parsedScenario.Steps.Last().Expected))
             {
                 parsedScenario.Steps.Last().Expected = text;
             }
             else
             {
+                // Otherwise, add a new step with the expected value
                 parsedScenario.Steps.Add(new TestStep { Expected = text });
             }
         }
 
-        private void AddActionStep(string text, ParsedTest parsedScenario)
+        private static void AddActionStep(string text, ParsedTest parsedScenario)
         {
-            if (string.IsNullOrEmpty(parsedScenario.Steps.Last().Action))
+            // If the last step has no Action value, add it to the last step
+            if (parsedScenario.Steps.Count > 0 && string.IsNullOrEmpty(parsedScenario.Steps.Last().Action))
             {
                 parsedScenario.Steps.Last().Action = text;
             }
             else
             {
+                // Otherwise, add a new step with the action value
                 parsedScenario.Steps.Add(new TestStep { Action = text });
             }
         }
