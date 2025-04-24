@@ -33,4 +33,8 @@
     <ProjectReference Include="..\TestParser\TestParser.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="example\reqnroll\" />
+  </ItemGroup>
+
 </Project>
