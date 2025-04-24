@@ -1,6 +1,6 @@
 ﻿using Common;
 
-namespace TestSyncTool.Contracts
+namespace TestCaseManager.Contracts
 {
     public interface ITestUpdateService
     {

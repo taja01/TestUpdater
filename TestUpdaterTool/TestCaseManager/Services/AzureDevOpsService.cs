@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
 using TestCaseManager.Configurations;
-using TestSyncTool.Contracts;
+using TestCaseManager.Contracts;
 
 namespace TestCaseManager.Services
 {
