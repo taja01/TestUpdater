@@ -99,54 +99,26 @@ namespace TestParser
                     case StepKeywordType.Context:
                     case StepKeywordType.Action:
                         mainStepKeywordType = StepKeywordType.Action;
-                        AddActionStep(step.Text, parsedScenario);
+                        TestStepHelper.AddActionStep(step.Text, parsedScenario);
                         break;
 
                     case StepKeywordType.Outcome:
                         mainStepKeywordType = StepKeywordType.Outcome;
-                        AddValidationStep(step.Text, parsedScenario);
+                        TestStepHelper.AddValidationStep(step.Text, parsedScenario);
                         break;
 
                     default:
                         // Use previous keyword type (Action or Outcome) to determine step type
                         if (mainStepKeywordType == StepKeywordType.Outcome)
                         {
-                            AddValidationStep(step.Text, parsedScenario);
+                            TestStepHelper.AddValidationStep(step.Text, parsedScenario);
                         }
                         else
                         {
-                            AddActionStep(step.Text, parsedScenario);
+                            TestStepHelper.AddActionStep(step.Text, parsedScenario);
                         }
                         break;
                 }
-            }
-        }
-
-        private static void AddValidationStep(string text, ParsedTest parsedScenario)
-        {
-            // If the last step has no Expected value, add it to the last step
-            if (parsedScenario.Steps.Count > 0 && string.IsNullOrEmpty(parsedScenario.Steps.Last().Expected))
-            {
-                parsedScenario.Steps.Last().Expected = text;
-            }
-            else
-            {
-                // Otherwise, add a new step with the expected value
-                parsedScenario.Steps.Add(new TestStep { Expected = text });
-            }
-        }
-
-        private static void AddActionStep(string text, ParsedTest parsedScenario)
-        {
-            // If the last step has no Action value, add it to the last step
-            if (parsedScenario.Steps.Count > 0 && string.IsNullOrEmpty(parsedScenario.Steps.Last().Action))
-            {
-                parsedScenario.Steps.Last().Action = text;
-            }
-            else
-            {
-                // Otherwise, add a new step with the action value
-                parsedScenario.Steps.Add(new TestStep { Action = text });
             }
         }
     }

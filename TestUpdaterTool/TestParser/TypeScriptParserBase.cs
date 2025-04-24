@@ -28,7 +28,7 @@ namespace TestParser
             foreach (Match stepMatch in stepsMatches)
             {
                 var stepDescription = stepMatch.Groups.Values.Skip(1).First(x => !string.IsNullOrEmpty(x.Value)).Value;
-                parsedTest.Steps.Add(CreateTestStep(stepDescription));
+                CreateTestStep(stepDescription, parsedTest);
             }
 
             return parsedTest.Title != null && parsedTest.TestCaseId != null ? parsedTest : null;
@@ -42,15 +42,15 @@ namespace TestParser
         }
 
         // Helper to classify test steps
-        private static TestStep CreateTestStep(string stepDescription)
+        private static void CreateTestStep(string stepDescription, ParsedTest parsedTest)
         {
             if (stepDescription.StartsWith("Verify", StringComparison.OrdinalIgnoreCase) || stepDescription.StartsWith("Confirm", StringComparison.OrdinalIgnoreCase))
             {
-                return new TestStep { Expected = stepDescription, Action = string.Empty };
+                TestStepHelper.AddValidationStep(stepDescription, parsedTest);
             }
             else
             {
-                return new TestStep { Action = stepDescription, Expected = string.Empty };
+                TestStepHelper.AddActionStep(stepDescription, parsedTest);
             }
         }
     }
