@@ -1,4 +1,4 @@
-﻿namespace TestCaseUpdater
+﻿namespace TestCaseManager.Configurations
 {
     public class AzureOptions
     {

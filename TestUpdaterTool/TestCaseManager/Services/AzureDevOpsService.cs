@@ -3,8 +3,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Text;
+using TestCaseManager.Configurations;
+using TestSyncTool.Contracts;
 
-namespace TestCaseUpdater
+namespace TestCaseManager.Services
 {
     public class AzureDevOpsService : ITestUpdateService
     {

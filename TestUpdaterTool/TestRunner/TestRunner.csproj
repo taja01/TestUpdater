@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TestCaseUpdater\TestCaseUpdater.csproj" />
+    <ProjectReference Include="..\TestCaseManager\TestCaseManager.csproj" />
     <ProjectReference Include="..\TestParser\TestParser.csproj" />
   </ItemGroup>
 
