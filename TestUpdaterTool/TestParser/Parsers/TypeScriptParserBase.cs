@@ -1,7 +1,9 @@
 ﻿using Common;
 using System.Text.RegularExpressions;
+using TestParser.Models;
+using TestParser.Utilities;
 
-namespace TestParser
+namespace TestParser.Parsers
 {
     public class TypeScriptParserBase
     {

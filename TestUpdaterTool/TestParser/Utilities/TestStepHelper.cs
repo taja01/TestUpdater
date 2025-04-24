@@ -1,6 +1,7 @@
 ﻿using Common;
+using TestParser.Models;
 
-namespace TestParser
+namespace TestParser.Utilities
 {
     public static class TestStepHelper
     {

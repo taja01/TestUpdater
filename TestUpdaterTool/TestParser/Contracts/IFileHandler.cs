@@ -1,4 +1,4 @@
-﻿namespace TestParser
+﻿namespace TestParser.Contracts
 {
     public interface IFileHandler
     {

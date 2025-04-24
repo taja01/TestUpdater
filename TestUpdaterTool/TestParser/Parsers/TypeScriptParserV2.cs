@@ -1,6 +1,8 @@
 ﻿using System.Text.RegularExpressions;
+using TestParser.Contracts;
+using TestParser.Models;
 
-namespace TestParser
+namespace TestParser.Parsers
 {
     public class TypeScriptParserV2(IFileHandler fileHandler) : TypeScriptParserBase, ITestCaseParser
     {

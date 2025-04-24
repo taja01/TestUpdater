@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
+using TestParser.Contracts;
+using TestParser.Models;
 
-namespace TestParser
+namespace TestParser.Services
 {
     public class TestProcessor(IFileHandler fileHandler, ITestCaseParser parser, ILogger<TestProcessor> logger) : ITestProcessor
     {

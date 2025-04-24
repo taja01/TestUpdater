@@ -1,4 +1,6 @@
-﻿namespace TestParser
+﻿using TestParser.Contracts;
+
+namespace TestParser.Utilities
 {
     // Handles file operations
     public class FileHandler : IFileHandler

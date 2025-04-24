@@ -1,6 +1,6 @@
 ﻿using Common;
 
-namespace TestParser
+namespace TestParser.Models
 {
     public class ParsedTest
     {

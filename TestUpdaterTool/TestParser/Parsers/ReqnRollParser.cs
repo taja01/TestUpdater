@@ -2,8 +2,11 @@
 using Common;
 using Gherkin;
 using Gherkin.Ast;
+using TestParser.Contracts;
+using TestParser.Models;
+using TestParser.Utilities;
 
-namespace TestParser
+namespace TestParser.Parsers
 {
     public class ReqnRollParser : ITestCaseParser
     {
@@ -17,7 +20,7 @@ namespace TestParser
             return ProcessGherkinDocument(gherkinDocument);
         }
 
-        private static List<ParsedTest> ProcessGherkinDocument(Gherkin.Ast.GherkinDocument gherkinDocument)
+        private static List<ParsedTest> ProcessGherkinDocument(GherkinDocument gherkinDocument)
         {
             var parsedTests = new List<ParsedTest>();
 
@@ -25,9 +28,9 @@ namespace TestParser
             var backgroundSteps = ParseBackgroundSteps(gherkinDocument);
 
             // Parse Scenarios
-            foreach (var scenarioRaw in gherkinDocument.Feature.Children.Where(x => x is Gherkin.Ast.Scenario))
+            foreach (var scenarioRaw in gherkinDocument.Feature.Children.Where(x => x is Scenario))
             {
-                if (scenarioRaw is Gherkin.Ast.Scenario scenario)
+                if (scenarioRaw is Scenario scenario)
                 {
                     var parsedScenario = ParseScenario(scenario, backgroundSteps);
                     parsedTests.Add(parsedScenario);
@@ -37,14 +40,14 @@ namespace TestParser
             return parsedTests;
         }
 
-        private static List<TestStep> ParseBackgroundSteps(Gherkin.Ast.GherkinDocument gherkinDocument)
+        private static List<TestStep> ParseBackgroundSteps(GherkinDocument gherkinDocument)
         {
             var backgroundSteps = new List<TestStep>();
 
             // Extract Background steps if present in the document
 
             if (gherkinDocument.Feature.Children
-                .FirstOrDefault(child => child is Gherkin.Ast.Background) is Background backgroundRaw)
+                .FirstOrDefault(child => child is Background) is Background backgroundRaw)
             {
                 foreach (var step in backgroundRaw.Steps)
                 {
@@ -59,7 +62,7 @@ namespace TestParser
             return backgroundSteps;
         }
 
-        private static ParsedTest ParseScenario(Gherkin.Ast.Scenario scenario, List<TestStep> backgroundSteps)
+        private static ParsedTest ParseScenario(Scenario scenario, List<TestStep> backgroundSteps)
         {
             var parsedScenario = new ParsedTest();
 

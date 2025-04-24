@@ -3,7 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using TestCaseUpdater;
-using TestParser;
+using TestParser.Contracts;
+using TestParser.Parsers;
+using TestParser.Services;
+using TestParser.Utilities;
 
 namespace TestRunner
 {

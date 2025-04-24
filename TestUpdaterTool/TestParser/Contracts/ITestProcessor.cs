@@ -1,4 +1,6 @@
-﻿namespace TestParser
+﻿using TestParser.Models;
+
+namespace TestParser.Contracts
 {
     public interface ITestProcessor
     {

@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using TestCaseUpdater;
-using TestParser;
+using TestParser.Contracts;
+using TestParser.Models;
 
 namespace TestRunner
 {
