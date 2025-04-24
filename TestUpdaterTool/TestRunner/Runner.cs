@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using TestCaseManager.Contracts;
 using TestParser.Contracts;
 using TestParser.Models;
-using TestSyncTool.Contracts;
 
 namespace TestRunner
 {
@@ -13,7 +13,7 @@ namespace TestRunner
             logger.LogInformation("Runner is starting the service.");
 
             string projectDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
-            string path = Path.Combine(projectDirectory, "example", "typeScript"); //reqnroll typeScript
+            string path = Path.Combine(projectDirectory, "example", "reqnroll"); //reqnroll typeScript
             var testCases = testProcessor.ProcessFiles(path);
 
             foreach (var testCase in testCases)
@@ -24,7 +24,7 @@ namespace TestRunner
                 }
 
                 // Update test case steps
-                await updater.UpdateTestCaseStepsAsync(testCase.TestCaseId.Value, testCase.Steps, testCase.Title);
+                await updater.UpdateTestCaseStepsAsync(testCase.TestCaseId!.Value, testCase.Steps, testCase.Title!);
             }
 
             logger.LogInformation("Runner has completed processing.");

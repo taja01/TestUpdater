@@ -3,12 +3,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using TestCaseManager.Configurations;
+using TestCaseManager.Contracts;
 using TestCaseManager.Services;
 using TestParser.Contracts;
 using TestParser.Parsers;
 using TestParser.Services;
 using TestParser.Utilities;
-using TestSyncTool.Contracts;
 
 namespace TestRunner
 {
@@ -66,8 +66,8 @@ namespace TestRunner
                         services.AddSingleton<ITestUpdateService, AzureDevOpsService>();
 
                         // Parsers
-                        services.AddSingleton<ITestCaseParser, TypeScriptParserV2>();
-                        ////  services.AddSingleton<ITestCaseParser, ReqnRollParser>();
+                        //// services.AddSingleton<ITestCaseParser, TypeScriptParserV2>();
+                        services.AddSingleton<ITestCaseParser, ReqnRollParser>();
 
                         // Add the runner as a hosted service
                         services.AddHostedService<Runner>();
