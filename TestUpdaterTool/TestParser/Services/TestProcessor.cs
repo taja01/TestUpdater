@@ -48,7 +48,9 @@ namespace TestParser.Services
                 logger.LogDebug("  Expected: {Expected}", step.Expected);
             }
 
-            logger.LogDebug(new string('-', 50));
+            logger.LogDebug("{Separator} END OF TEST CASE {Separator}",
+                new string('-', 10),
+                new string('-', 10));
         }
     }
 }

@@ -4,13 +4,14 @@ using TestParser.Models;
 
 namespace TestParser.Parsers
 {
-    public class TypeScriptParser(IFileHandler fileHandler) : TypeScriptParserBase, ITestCaseParser
+    public partial class TypeScriptParser(IFileHandler fileHandler) : TypeScriptParserBase, ITestCaseParser
     {
         public string FilePattern => "*.system.spec.ts";
-        private static readonly Regex TestBlockRegex = new(
-           @"test\s*\(\s*\{(?:[^{}]*|\{(?:[^{}]*|\{.*?\})*\})*\}\s*,\s*\{(?:[^{}]*|\{(?:[^{}]*|\{.*?\})*\})*\}\s*,\s*async\s*\([^)]*\)\s*=>\s*\{(?:[^{}]*|\{(?:[^{}]*|\{.*?\})*\})*\}\s*\)",
-            RegexOptions.Singleline
-        );
+
+        [GeneratedRegex(@"test\s*\(\s*\{(?:[^{}]*|\{(?:[^{}]*|\{.*?\})*\})*\}\s*,\s*\{(?:[^{}]*|\{(?:[^{}]*|\{.*?\})*\})*\}\s*,\s*async\s*\([^)]*\)\s*=>\s*\{(?:[^{}]*|\{(?:[^{}]*|\{.*?\})*\})*\}\s*\)", RegexOptions.Singleline)]
+        private static partial Regex GetTestBlockRegex();
+
+        private static Regex TestStepRegex => GetTestBlockRegex();
 
         // Parse the content of a file
         public List<ParsedTest> ParseFile(string filePath)
@@ -18,7 +19,7 @@ namespace TestParser.Parsers
             var parsedTests = new List<ParsedTest>();
             var fileContent = fileHandler.ReadFileContent(filePath);
             // Match all `test(...)` blocks
-            var testBlockMatches = TestBlockRegex.Matches(fileContent);
+            var testBlockMatches = TestStepRegex.Matches(fileContent);
             foreach (Match testBlockMatch in testBlockMatches)
             {
                 var testBlock = testBlockMatch.Value;

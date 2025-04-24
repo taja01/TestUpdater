@@ -1,16 +1,15 @@
-﻿using Common;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using TestParser.Models;
 using TestParser.Utilities;
 
 namespace TestParser.Parsers
 {
-    public class TypeScriptParserBase
+    public partial class TypeScriptParserBase
     {
-        private static readonly Regex TestStepRegex = new(
-      @"test\.step\(['\""](.+?)['\""], async \(\) => \{",
-      RegexOptions.Singleline
-      );
+        [GeneratedRegex(@"test\.step\(['\""](.+?)['\""], async \(\) => \{", RegexOptions.Singleline)]
+        private static partial Regex GetTestStepRegex();
+
+        private static Regex TestStepRegex => GetTestStepRegex();
 
         // Parse a single test block
         protected static ParsedTest? ParseTestBlock(string testBlock)
