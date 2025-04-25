@@ -36,8 +36,6 @@ Using gherking parser. Current solution: Scenario should have a tag like @TC{Id}
 [22:44:15 DBG]   Action: Navigate to the search page
 [22:44:15 DBG]   Expected:
 [22:44:15 DBG]   Action: Click on the "More information..." link
-[22:44:15 DBG]   Expected:
-[22:44:15 DBG]   Action:
 [22:44:15 DBG]   Expected: Verify URL changes after clicking the link
 ```
 # TODOs:
