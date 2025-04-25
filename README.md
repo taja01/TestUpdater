@@ -26,6 +26,9 @@ Two version added
 2. using regex but spliting by 'test('
 Title and TestCaseId are parsed
 
+## ReqnRoll / Gherking
+Using gherking parser. Current solution: Scenario should have a tag like @TC{Id}. Scenario title will be the testcase title.
+
 ## Example:
 ```
 [22:44:15 DBG] Title: Verify search operation on the site
@@ -41,3 +44,5 @@ Title and TestCaseId are parsed
  TODO: add reqnroll parser
  
  TODO: try other tools than azure
+
+TODO: reqnroll: example tables?
