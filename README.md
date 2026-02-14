@@ -1,5 +1,7 @@
 # TestUpdater
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A production-ready .NET 10 application that automatically synchronizes test case definitions from Gherkin feature files and TypeScript test files to Azure DevOps Test Cases.
 
 ## Overview
