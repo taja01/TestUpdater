@@ -60,14 +60,15 @@ namespace TestRunner
                         });
 
                         // Register application services
-                        services.AddSingleton<IFileHandler, FileHandler>();
-                        services.AddSingleton<ITestProcessor, TestProcessor>();
-                        services.AddSingleton<ITestCaseValidator, TestCaseValidator>();
+                        // Stateless services - use Transient
+                        services.AddTransient<IFileHandler, FileHandler>();
+                        services.AddTransient<ITestProcessor, TestProcessor>();
+                        services.AddTransient<ITestCaseValidator, TestCaseValidator>();
 
-                        // Test services
-                        services.AddSingleton<ITestUpdateService, AzureDevOpsService>();
+                        // HttpClient-based service - lifetime managed by AddHttpClient
+                        services.AddHttpClient<ITestUpdateService, AzureDevOpsService>();
 
-                        // Parsers
+                        // Parsers can be Singleton (stateless)
                         services.AddSingleton<ITestCaseParser, ReqnRollParser>();
 
                         // Add the runner as a hosted service
