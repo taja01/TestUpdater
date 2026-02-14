@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using TestCaseManager.Contracts;
 using TestParser.Contracts;
+using TestRunner.Configurations;
 
 namespace TestRunner
 {
@@ -9,14 +11,17 @@ namespace TestRunner
         ITestProcessor testProcessor,
         ITestUpdateService updater,
         ITestCaseValidator validator,
+        IOptions<TestRunnerOptions> runnerOptions,
         ILogger<Runner> logger) : IHostedService
     {
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation("Runner is starting the service.");
 
-            string projectDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
-            string path = Path.Combine(projectDirectory, "example", "reqnroll");
+            var options = runnerOptions.Value;
+            string path = options.UseRelativePath
+                ? Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\", options.TestFilesPath))
+                : options.TestFilesPath;
 
             var testCases = await testProcessor.ProcessFilesAsync(path, cancellationToken);
 
