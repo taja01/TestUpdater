@@ -23,7 +23,7 @@ namespace TestParser.Services
         {
             logger.LogInformation("Processing file: {filePath}", filePath);
 
-            var parsedTests = parser.ParseFile(filePath);
+            var parsedTests = await parser.ParseFileAsync(filePath, cancellationToken);
 
             DisplayParsedTests(parsedTests);
             return parsedTests;

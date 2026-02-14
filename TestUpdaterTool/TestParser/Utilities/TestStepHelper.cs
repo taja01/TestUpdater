@@ -1,4 +1,6 @@
 ﻿using Common;
+using Gherkin;
+using Gherkin.Ast;
 using TestParser.Models;
 
 namespace TestParser.Utilities
@@ -36,6 +38,30 @@ namespace TestParser.Utilities
             {
                 // Otherwise, add a new step with the action value
                 currentTestScenario.Steps.Add(new TestStep { Action = text });
+            }
+        }
+
+        /// <summary>
+        /// Adds or updates test steps based on Gherkin step keyword type.
+        /// Handles Given/When/Then and And/But conjunctions properly.
+        /// </summary>
+        public static void AddOrUpdateTestSteps(ParsedTest parsedTest, StepKeywordType mainStepKeywordType, Step step)
+        {
+            switch (mainStepKeywordType)
+            {
+                case StepKeywordType.Context: // Given
+                case StepKeywordType.Action:  // When
+                    AddActionStep(step.Text, parsedTest);
+                    break;
+
+                case StepKeywordType.Outcome: // Then
+                    AddValidationStep(step.Text, parsedTest);
+                    break;
+
+                default:
+                    // Fallback: treat unknown types as action steps
+                    AddActionStep(step.Text, parsedTest);
+                    break;
             }
         }
     }
