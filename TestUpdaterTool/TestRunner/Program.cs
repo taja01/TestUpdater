@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Polly;
 using Serilog;
 using System.Text;
 using TestCaseManager.Configurations;
@@ -71,7 +72,20 @@ namespace TestRunner
                         services.AddTransient<ITestCaseValidator, TestCaseValidator>();
 
                         // HttpClient-based service - lifetime managed by AddHttpClient
-                        services.AddHttpClient<ITestUpdateService, AzureDevOpsService>();
+                        services.AddHttpClient<ITestUpdateService, AzureDevOpsService>((serviceProvider, client) =>
+                        {
+                            var config = serviceProvider.GetRequiredService<IOptions<AzureOptions>>().Value;
+
+                            client.BaseAddress = new Uri($"https://dev.azure.com/{config.Organization}/{config.Project}/_apis/");
+
+                            var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{config.PersonalAccessToken}"));
+                            client.DefaultRequestHeaders.Authorization =
+                                new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
+                        })
+                        .AddTransientHttpErrorPolicy(policy =>
+                            policy.WaitAndRetryAsync(3, retryAttempt =>
+                                TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))))
+                        .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(30)));
 
                         // Parsers can be Singleton (stateless)
                         services.AddSingleton<ITestCaseParser, ReqnRollParser>();
