@@ -2,7 +2,8 @@
 {
     public interface IFileHandler
     {
-        IEnumerable<string> GetFiles(string folderPath, string searchPattern);
-        string ReadFileContent(string filePath);
+        IAsyncEnumerable<string> GetFilesAsync(string folderPath, string searchPattern, CancellationToken cancellationToken = default);
+
+        Task<string> ReadFileContentAsync(string filePath, CancellationToken cancellationToken = default);
     }
 }

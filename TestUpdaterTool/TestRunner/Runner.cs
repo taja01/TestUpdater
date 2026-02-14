@@ -14,7 +14,7 @@ namespace TestRunner
 
             string projectDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
             string path = Path.Combine(projectDirectory, "example", "reqnroll"); //reqnroll typeScript
-            var testCases = testProcessor.ProcessFiles(path);
+            var testCases = await testProcessor.ProcessFilesAsync(path, cancellationToken);
 
             foreach (var testCase in testCases)
             {
