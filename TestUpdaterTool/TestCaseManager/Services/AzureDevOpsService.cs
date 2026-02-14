@@ -38,7 +38,7 @@ namespace TestCaseManager.Services
         /// <param name="testSteps">The test steps object to represent actions and expected results.</param>
         /// <param name="title">Test Title</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task UpdateTestCaseStepsAsync(int testCaseId, List<TestStep> testSteps, string title)
+        public async Task UpdateTestCaseStepsAsync(int testCaseId, List<TestStep> testSteps, string title, CancellationToken cancellationToken)
         {
             if (testSteps == null || testSteps.Count == 0)
             {
@@ -72,7 +72,10 @@ namespace TestCaseManager.Services
                 {
                     string errorMessage = await response.Content.ReadAsStringAsync();
                     _logger.LogError("Failed to update Test Case ID {TestCaseId}. Status Code: {StatusCode}. Error: {Error}",
-                    testCaseId, response.StatusCode, errorMessage);
+                        testCaseId, response.StatusCode, errorMessage);
+
+                    // Throw exception so Runner knows update failed
+                    throw new HttpRequestException($"Failed to update Test Case ID {testCaseId}. Status: {response.StatusCode}. Error: {errorMessage}");
                 }
             }
             catch (Exception ex)
