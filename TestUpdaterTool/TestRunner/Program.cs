@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Serilog;
+using System.Text;
 using TestCaseManager.Configurations;
 using TestCaseManager.Contracts;
 using TestCaseManager.Services;
@@ -46,7 +48,16 @@ namespace TestRunner
                         .ValidateOnStart();
 
                         // Register HttpClientFactory for AzureDevOpsService
-                        services.AddHttpClient<AzureDevOpsService>();
+                        services.AddHttpClient<AzureDevOpsService>((serviceProvider, client) =>
+                        {
+                            var config = serviceProvider.GetRequiredService<IOptions<AzureOptions>>().Value;
+
+                            client.BaseAddress = new Uri($"https://dev.azure.com/{config.Organization}/{config.Project}/_apis/");
+
+                            var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{config.PersonalAccessToken}"));
+                            client.DefaultRequestHeaders.Authorization =
+                                new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
+                        });
 
                         // Register application services
                         services.AddSingleton<IFileHandler, FileHandler>();
