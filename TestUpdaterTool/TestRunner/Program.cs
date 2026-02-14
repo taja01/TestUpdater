@@ -18,12 +18,17 @@ namespace TestRunner
     {
         public static async Task Main(string[] args)
         {
-            Log.Logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(new ConfigurationBuilder()
+            // Build configuration once
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
-                .Build()
-                )
+                .AddUserSecrets<Program>() // Add user secrets support
+                .Build();
+
+            // Configure Serilog
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
                 .CreateLogger();
 
             try
@@ -34,9 +39,9 @@ namespace TestRunner
                     .UseSerilog()
                     .ConfigureAppConfiguration((hostingContext, config) =>
                     {
-                        config.SetBasePath(Directory.GetCurrentDirectory());
-                        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-                        config.AddEnvironmentVariables();
+                        // Clear default config and use our pre-built configuration
+                        config.Sources.Clear();
+                        config.AddConfiguration(configuration);
                     })
                     .ConfigureServices((context, services) =>
                     {
