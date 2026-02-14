@@ -41,6 +41,13 @@ namespace TestRunner
                         // Configure AzureDevOps options
                         services.Configure<AzureOptions>(context.Configuration.GetSection("AzureOptions"));
 
+                        var azureOptions = context.Configuration.GetSection("AzureOptions").Get<AzureOptions>();
+                        var pat = context.Configuration["AzureOptions:PersonalAccessToken"];
+                        if (string.IsNullOrWhiteSpace(pat))
+                        {
+                            throw new InvalidOperationException("Azure Personal Access Token not configured. Use user-secrets, env var or Key Vault.");
+                        }
+
                         // Register HttpClientFactory for AzureDevOpsService
                         services.AddHttpClient<AzureDevOpsService>();
 
