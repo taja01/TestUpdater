@@ -46,7 +46,7 @@ namespace TestCaseManager.Services
             }
 
             // Use relative URL now that BaseAddress is set
-            string url = $"wit/workitems/{testCaseId}?api-version=7.1-preview.3";
+            string url = $"wit/workitems/{testCaseId}?api-version={_options.ApiVersion}";
 
             // Build test steps string in format understood by Azure DevOps
             var stepsFieldValue = BuildTestStepsValue(testSteps);
