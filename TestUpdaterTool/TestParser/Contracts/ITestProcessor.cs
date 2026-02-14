@@ -4,6 +4,6 @@ namespace TestParser.Contracts
 {
     public interface ITestProcessor
     {
-        List<ParsedTest> ProcessFiles(string folderPath);
+        Task<List<ParsedTest>> ProcessFilesAsync(string folderPath, CancellationToken cancellationToken = default);
     }
 }

@@ -18,13 +18,15 @@ namespace TestParser.Parsers
             return [.. segments];
         }
 
-        public List<ParsedTest> ParseFile(string filePath)
+        public async Task<List<ParsedTest>> ParseFileAsync(string filePath, CancellationToken cancellationToken = default)
         {
             var parsedTests = new List<ParsedTest>();
-            var fileContent = fileHandler.ReadFileContent(filePath);
+            var fileContent = await fileHandler.ReadFileContentAsync(filePath, cancellationToken);
             var testBlocks = ExtractTestCases(fileContent);
+
             foreach (var testBlock in testBlocks)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var parsedTest = ParseTestBlock(testBlock);
                 if (parsedTest != null)
                 {

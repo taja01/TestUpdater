@@ -6,24 +6,24 @@ namespace TestParser.Services
 {
     public class TestProcessor(IFileHandler fileHandler, ITestCaseParser parser, ILogger<TestProcessor> logger) : ITestProcessor
     {
-        public List<ParsedTest> ProcessFiles(string folderPath)
+        public async Task<List<ParsedTest>> ProcessFilesAsync(string folderPath, CancellationToken cancellationToken = default)
         {
-            var files = fileHandler.GetFiles(folderPath, parser.FilePattern);
             var result = new List<ParsedTest>();
 
-            foreach (var file in files)
+            await foreach (var file in fileHandler.GetFilesAsync(folderPath, parser.FilePattern, cancellationToken))
             {
-                result.AddRange(ProcessFile(file));
+                var parsedTests = await ProcessFileAsync(file, cancellationToken);
+                result.AddRange(parsedTests);
             }
 
             return result;
         }
 
-        private List<ParsedTest> ProcessFile(string filePath)
+        private async Task<List<ParsedTest>> ProcessFileAsync(string filePath, CancellationToken cancellationToken)
         {
             logger.LogInformation("Processing file: {filePath}", filePath);
 
-            var parsedTests = parser.ParseFile(filePath);
+            var parsedTests = await parser.ParseFileAsync(filePath, cancellationToken);
 
             DisplayParsedTests(parsedTests);
             return parsedTests;

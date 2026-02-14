@@ -1,5 +1,4 @@
-﻿
-using Common;
+﻿using Common;
 using Gherkin;
 using Gherkin.Ast;
 using TestParser.Contracts;
@@ -12,12 +11,15 @@ namespace TestParser.Parsers
     {
         public string FilePattern => "*.feature";
 
-        public List<ParsedTest> ParseFile(string path)
+        public Task<List<ParsedTest>> ParseFileAsync(string path, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            
             var parser = new Parser();
             var gherkinDocument = parser.Parse(path);
 
-            return ProcessGherkinDocument(gherkinDocument);
+            var result = ProcessGherkinDocument(gherkinDocument);
+            return Task.FromResult(result);
         }
 
         private static List<ParsedTest> ProcessGherkinDocument(GherkinDocument gherkinDocument)
@@ -45,7 +47,6 @@ namespace TestParser.Parsers
             var backgroundSteps = new List<TestStep>();
 
             // Extract Background steps if present in the document
-
             if (gherkinDocument.Feature.Children
                 .FirstOrDefault(child => child is Background) is Background backgroundRaw)
             {
@@ -101,27 +102,12 @@ namespace TestParser.Parsers
                 {
                     case StepKeywordType.Context:
                     case StepKeywordType.Action:
-                        mainStepKeywordType = StepKeywordType.Action;
-                        TestStepHelper.AddActionStep(step.Text, parsedScenario);
-                        break;
-
                     case StepKeywordType.Outcome:
-                        mainStepKeywordType = StepKeywordType.Outcome;
-                        TestStepHelper.AddValidationStep(step.Text, parsedScenario);
-                        break;
-
-                    default:
-                        // Use previous keyword type (Action or Outcome) to determine step type
-                        if (mainStepKeywordType == StepKeywordType.Outcome)
-                        {
-                            TestStepHelper.AddValidationStep(step.Text, parsedScenario);
-                        }
-                        else
-                        {
-                            TestStepHelper.AddActionStep(step.Text, parsedScenario);
-                        }
+                        mainStepKeywordType = step.KeywordType;
                         break;
                 }
+
+                TestStepHelper.AddOrUpdateTestSteps(parsedScenario, mainStepKeywordType, step);
             }
         }
     }

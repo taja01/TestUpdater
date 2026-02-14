@@ -19,15 +19,11 @@ namespace TestCaseManager.Services
             _logger = logger;
             _options = options.Value;
             _httpClient = httpClient;
-            _httpClient.BaseAddress = new Uri($"https://dev.azure.com/{_options.Organization}/{_options.Project}/_apis/");
 
-
-            // Add authorization header using the PAT
-            var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{_options.PersonalAccessToken}"));
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
-
-            _logger.LogInformation("AzureDevOpsService initialized.");
+            // Remove BaseAddress and Authorization - configured in Program.cs
+            _logger.LogInformation("AzureDevOpsService initialized for Organization: {Organization}, Project: {Project}",
+                _options.Organization,
+                _options.Project);
         }
 
         /// <summary>
@@ -37,14 +33,15 @@ namespace TestCaseManager.Services
         /// <param name="testSteps">The test steps object to represent actions and expected results.</param>
         /// <param name="title">Test Title</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task UpdateTestCaseStepsAsync(int testCaseId, List<TestStep> testSteps, string title)
+        public async Task UpdateTestCaseStepsAsync(int testCaseId, List<TestStep> testSteps, string title, CancellationToken cancellationToken)
         {
             if (testSteps == null || testSteps.Count == 0)
             {
                 throw new ArgumentException("Test steps cannot be null or empty.");
             }
 
-            string url = $"https://dev.azure.com/{_options.Organization}/{_options.Project}/_apis/wit/workitems/{testCaseId}?api-version=7.1-preview.3";
+            // Use relative URL now that BaseAddress is set
+            string url = $"wit/workitems/{testCaseId}?api-version={_options.ApiVersion}";
 
             // Build test steps string in format understood by Azure DevOps
             var stepsFieldValue = BuildTestStepsValue(testSteps);
@@ -60,7 +57,7 @@ namespace TestCaseManager.Services
             try
             {
                 var content = new StringContent(JsonConvert.SerializeObject(patchDocument), Encoding.UTF8, "application/json-patch+json");
-                var response = await _httpClient.PatchAsync(url, content);
+                var response = await _httpClient.PatchAsync(url, content, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -68,9 +65,12 @@ namespace TestCaseManager.Services
                 }
                 else
                 {
-                    string errorMessage = await response.Content.ReadAsStringAsync();
+                    string errorMessage = await response.Content.ReadAsStringAsync(cancellationToken);
                     _logger.LogError("Failed to update Test Case ID {TestCaseId}. Status Code: {StatusCode}. Error: {Error}",
-                    testCaseId, response.StatusCode, errorMessage);
+                        testCaseId, response.StatusCode, errorMessage);
+
+                    // Throw exception so Runner knows update failed
+                    throw new HttpRequestException($"Failed to update Test Case ID {testCaseId}. Status: {response.StatusCode}. Error: {errorMessage}");
                 }
             }
             catch (Exception ex)
@@ -88,27 +88,20 @@ namespace TestCaseManager.Services
         private static string BuildTestStepsValue(List<TestStep> testSteps)
         {
             var xmlBuilder = new StringBuilder();
-
-            // Add root node with metadata like title and automation status
             xmlBuilder.Append("<steps id=\"0\" last=\"\">");
 
-            // Iterate through test steps and build their XML representation
             for (int i = 0; i < testSteps.Count; i++)
             {
                 var step = testSteps[i];
 
+                // Sanitize and validate
+                var action = System.Security.SecurityElement.Escape(step.Action ?? string.Empty);
+                var expected = System.Security.SecurityElement.Escape(step.Expected ?? string.Empty);
+
                 xmlBuilder.Append($"<step id=\"{i + 1}\" type=\"ActionStep\">");
-
-                // Add the step's action
-                xmlBuilder.Append("<parameterizedString isformatted=\"true\">");
-                xmlBuilder.Append(System.Security.SecurityElement.Escape(step.Action)); // Escape special XML chars
-                xmlBuilder.Append("</parameterizedString>");
-
-                // Add the step's expected result
-                xmlBuilder.Append("<parameterizedString isformatted=\"true\">");
-                xmlBuilder.Append(System.Security.SecurityElement.Escape(step.Expected)); // Escape special XML chars
-                xmlBuilder.Append("</parameterizedString>");
-
+                xmlBuilder.Append($"<parameterizedString isformatted=\"true\">&lt;DIV&gt;&lt;P&gt;{action}&lt;/P&gt;&lt;/DIV&gt;</parameterizedString>");
+                xmlBuilder.Append($"<parameterizedString isformatted=\"true\">&lt;DIV&gt;&lt;P&gt;{expected}&lt;/P&gt;&lt;/DIV&gt;</parameterizedString>");
+                xmlBuilder.Append("<description/>");
                 xmlBuilder.Append("</step>");
             }
 

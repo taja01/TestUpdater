@@ -2,17 +2,23 @@
 
 namespace TestParser.Utilities
 {
-    // Handles file operations
     public class FileHandler : IFileHandler
     {
-        public IEnumerable<string> GetFiles(string folderPath, string searchPattern)
+        public async IAsyncEnumerable<string> GetFilesAsync(string folderPath, string searchPattern, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            return Directory.GetFiles(folderPath, searchPattern);
+            var files = Directory.EnumerateFiles(folderPath, searchPattern);
+
+            foreach (var file in files)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                yield return file;
+                await Task.Yield();
+            }
         }
 
-        public string ReadFileContent(string filePath)
+        public async Task<string> ReadFileContentAsync(string filePath, CancellationToken cancellationToken = default)
         {
-            return File.ReadAllText(filePath);
+            return await File.ReadAllTextAsync(filePath, cancellationToken);
         }
     }
 }

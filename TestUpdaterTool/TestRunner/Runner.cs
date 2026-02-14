@@ -1,57 +1,77 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using TestCaseManager.Contracts;
 using TestParser.Contracts;
-using TestParser.Models;
+using TestRunner.Configurations;
 
 namespace TestRunner
 {
-    internal class Runner(ITestProcessor testProcessor, ITestUpdateService updater, ILogger<Runner> logger) : IHostedService
+    internal class Runner(
+        ITestProcessor testProcessor,
+        ITestUpdateService updater,
+        ITestCaseValidator validator,
+        IOptions<TestRunnerOptions> runnerOptions,
+        ILogger<Runner> logger) : IHostedService
     {
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation("Runner is starting the service.");
 
-            string projectDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\"));
-            string path = Path.Combine(projectDirectory, "example", "reqnroll"); //reqnroll typeScript
-            var testCases = testProcessor.ProcessFiles(path);
+            var options = runnerOptions.Value;
+            string path = options.UseRelativePath
+                ? Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\", options.TestFilesPath))
+                : options.TestFilesPath;
+
+            logger.LogInformation("Processing test files from path: {Path}", path);
+
+            var testCases = await testProcessor.ProcessFilesAsync(path, cancellationToken);
+
+            int successCount = 0;
+            int failedCount = 0;
 
             foreach (var testCase in testCases)
             {
-                if (!IsValidTestCase(testCase))
+                if (!validator.IsValid(testCase, out var validationErrors))
                 {
+                    logger.LogWarning("Test case '{Title}' validation failed: {Errors}",
+                        testCase.Title ?? "Unknown",
+                        string.Join(", ", validationErrors));
+                    failedCount++;
                     continue;
                 }
 
-                // Update test case steps
-                await updater.UpdateTestCaseStepsAsync(testCase.TestCaseId!.Value, testCase.Steps, testCase.Title!);
+                try
+                {
+                    await updater.UpdateTestCaseStepsAsync(
+                        testCase.TestCaseId!.Value,
+                        testCase.Steps,
+                        testCase.Title!,
+                        cancellationToken);
+
+                    successCount++;
+                    logger.LogInformation("Successfully updated test case '{Title}' (ID: {TestCaseId})",
+                        testCase.Title,
+                        testCase.TestCaseId);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Failed to update test case '{Title}' (ID: {TestCaseId})",
+                        testCase.Title,
+                        testCase.TestCaseId);
+                    failedCount++;
+                }
             }
 
-            logger.LogInformation("Runner has completed processing.");
+            logger.LogInformation("Runner completed processing. Success: {SuccessCount}, Failed: {FailedCount}",
+                successCount,
+                failedCount);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
             logger.LogInformation("Runner is stopping the service.");
-            // If your service requires any clean-up, put it here.
             return Task.CompletedTask;
-        }
-
-        private bool IsValidTestCase(ParsedTest testCase)
-        {
-            if (string.IsNullOrEmpty(testCase.Title))
-            {
-                logger.LogWarning("Title missing!");
-                return false;
-            }
-
-            if (!testCase.TestCaseId.HasValue)
-            {
-                logger.LogWarning("TestCase ID is null!");
-                return false;
-            }
-
-            return true;
         }
     }
 }

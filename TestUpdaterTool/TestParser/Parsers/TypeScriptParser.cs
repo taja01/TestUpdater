@@ -14,14 +14,17 @@ namespace TestParser.Parsers
         private static Regex TestStepRegex => GetTestBlockRegex();
 
         // Parse the content of a file
-        public List<ParsedTest> ParseFile(string filePath)
+        public async Task<List<ParsedTest>> ParseFileAsync(string filePath, CancellationToken cancellationToken = default)
         {
             var parsedTests = new List<ParsedTest>();
-            var fileContent = fileHandler.ReadFileContent(filePath);
+            var fileContent = await fileHandler.ReadFileContentAsync(filePath, cancellationToken);
+
             // Match all `test(...)` blocks
             var testBlockMatches = TestStepRegex.Matches(fileContent);
+
             foreach (Match testBlockMatch in testBlockMatches)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 var testBlock = testBlockMatch.Value;
                 var parsedTest = ParseTestBlock(testBlock);
                 if (parsedTest != null)

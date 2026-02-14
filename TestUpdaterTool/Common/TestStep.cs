@@ -2,7 +2,7 @@
 {
     public class TestStep
     {
-        public string? Action { get; set; }
-        public string? Expected { get; set; }
+        public string Action { get; set; } = string.Empty;
+        public string Expected { get; set; } = string.Empty;
     }
 }

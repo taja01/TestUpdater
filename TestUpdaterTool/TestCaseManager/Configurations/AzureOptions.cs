@@ -1,9 +1,18 @@
-﻿namespace TestCaseManager.Configurations
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace TestCaseManager.Configurations
 {
     public class AzureOptions
     {
-        public string? Organization { get; set; }
-        public string? Project { get; set; }
-        public string? PersonalAccessToken { get; set; }
+        [Required(ErrorMessage = "Azure DevOps Organization is required")]
+        public string Organization { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Azure DevOps Project is required")]
+        public string Project { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Azure DevOps Personal Access Token is required")]
+        public string PersonalAccessToken { get; set; } = string.Empty;
+
+        public string ApiVersion { get; set; } = "7.1-preview.3";
     }
 }

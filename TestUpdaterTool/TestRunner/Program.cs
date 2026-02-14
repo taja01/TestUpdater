@@ -2,13 +2,12 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using TestCaseManager.Configurations;
-using TestCaseManager.Contracts;
 using TestCaseManager.Services;
 using TestParser.Contracts;
 using TestParser.Parsers;
 using TestParser.Services;
 using TestParser.Utilities;
+using TestRunner.Configurations;
 
 namespace TestRunner
 {
@@ -16,57 +15,48 @@ namespace TestRunner
     {
         public static async Task Main(string[] args)
         {
-            // Configure Serilog
-            ////Log.Logger = new LoggerConfiguration()
-            ////    .MinimumLevel.Debug() // Set default log level
-            ////    .ReadFrom.Configuration(new ConfigurationBuilder()
-            ////        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true) // Read configuration from appsettings.json
-            ////        .AddEnvironmentVariables()
-            ////        .Build()
-            ////    )
-            ////    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
-
-            ////    .WriteTo.File("logs/log-.txt", rollingInterval: RollingInterval.Day)
-            ////    .CreateLogger();
-
-            Log.Logger = new LoggerConfiguration()
-                .ReadFrom.Configuration(new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true) // Read configuration from appsettings.json
+            // Build configuration once
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
-                .Build()
-                )
+                .AddUserSecrets<Program>() // Add user secrets support
+                .Build();
+
+            // Configure Serilog
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
                 .CreateLogger();
-            // Build and run the host
+
             try
             {
                 Log.Information("Starting application...");
 
                 var host = Host.CreateDefaultBuilder(args)
-                    .UseSerilog() // Replace default logging with Serilog
+                    .UseSerilog()
                     .ConfigureAppConfiguration((hostingContext, config) =>
                     {
-                        // Configuration sources
-                        config.SetBasePath(Directory.GetCurrentDirectory());
-                        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-                        config.AddEnvironmentVariables();
+                        // Clear default config and use our pre-built configuration
+                        config.Sources.Clear();
+                        config.AddConfiguration(configuration);
                     })
                     .ConfigureServices((context, services) =>
                     {
-                        // Configure AzureDevOps options
-                        services.Configure<AzureOptions>(context.Configuration.GetSection("AzureOptions"));
+                        // Configure TestRunner options
+                        services.AddOptions<TestRunnerOptions>()
+                            .Bind(context.Configuration.GetSection("TestRunnerOptions"))
+                            .ValidateDataAnnotations()
+                            .ValidateOnStart();
 
-                        // Register HttpClientFactory for AzureDevOpsService
-                        services.AddHttpClient<AzureDevOpsService>();
+                        // Add Azure DevOps services using extension method
+                        services.AddAzureDevOpsServices(context.Configuration);
 
                         // Register application services
-                        services.AddSingleton<IFileHandler, FileHandler>();
-                        services.AddSingleton<ITestProcessor, TestProcessor>();
+                        services.AddTransient<IFileHandler, FileHandler>();
+                        services.AddTransient<ITestProcessor, TestProcessor>();
+                        services.AddTransient<ITestCaseValidator, TestCaseValidator>();
 
-                        // Test services
-                        services.AddSingleton<ITestUpdateService, AzureDevOpsService>();
-
-                        // Parsers
-                        //// services.AddSingleton<ITestCaseParser, TypeScriptParserV2>();
+                        // Parsers can be Singleton (stateless)
                         services.AddSingleton<ITestCaseParser, ReqnRollParser>();
 
                         // Add the runner as a hosted service
@@ -74,7 +64,6 @@ namespace TestRunner
                     })
                     .Build();
 
-                // Run the host
                 await host.RunAsync();
             }
             catch (Exception ex)
@@ -83,7 +72,7 @@ namespace TestRunner
             }
             finally
             {
-                Log.CloseAndFlush(); // Ensure all logs are written before application exits
+                Log.CloseAndFlush();
             }
         }
     }
