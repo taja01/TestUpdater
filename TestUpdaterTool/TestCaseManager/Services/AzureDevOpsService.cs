@@ -19,10 +19,11 @@ namespace TestCaseManager.Services
             _logger = logger;
             _options = options.Value;
             _httpClient = httpClient;
+
+            // Set base address only
             _httpClient.BaseAddress = new Uri($"https://dev.azure.com/{_options.Organization}/{_options.Project}/_apis/");
 
-
-            // Add authorization header using the PAT
+            // Add authorization header
             var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{_options.PersonalAccessToken}"));
             _httpClient.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
@@ -44,7 +45,8 @@ namespace TestCaseManager.Services
                 throw new ArgumentException("Test steps cannot be null or empty.");
             }
 
-            string url = $"https://dev.azure.com/{_options.Organization}/{_options.Project}/_apis/wit/workitems/{testCaseId}?api-version=7.1-preview.3";
+            // Use relative URL now that BaseAddress is set
+            string url = $"wit/workitems/{testCaseId}?api-version=7.1-preview.3";
 
             // Build test steps string in format understood by Azure DevOps
             var stepsFieldValue = BuildTestStepsValue(testSteps);
