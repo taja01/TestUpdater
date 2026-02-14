@@ -12,6 +12,7 @@ using TestParser.Contracts;
 using TestParser.Parsers;
 using TestParser.Services;
 using TestParser.Utilities;
+using TestRunner.Configurations;
 
 namespace TestRunner
 {
@@ -46,32 +47,19 @@ namespace TestRunner
                     })
                     .ConfigureServices((context, services) =>
                     {
-                        // Configure AzureDevOps options
-                        services.Configure<AzureOptions>(context.Configuration.GetSection("AzureOptions"));
+                        // Configure AzureDevOps options with validation
                         services.AddOptions<AzureOptions>()
-                        .Bind(context.Configuration.GetSection("AzureOptions"))
-                        .ValidateDataAnnotations()
-                        .ValidateOnStart();
+                            .Bind(context.Configuration.GetSection("AzureOptions"))
+                            .ValidateDataAnnotations()
+                            .ValidateOnStart();
 
-                        // Register HttpClientFactory for AzureDevOpsService
-                        services.AddHttpClient<AzureDevOpsService>((serviceProvider, client) =>
-                        {
-                            var config = serviceProvider.GetRequiredService<IOptions<AzureOptions>>().Value;
+                        // Configure TestRunner options
+                        services.AddOptions<TestRunnerOptions>()
+                            .Bind(context.Configuration.GetSection("TestRunnerOptions"))
+                            .ValidateDataAnnotations()
+                            .ValidateOnStart();
 
-                            client.BaseAddress = new Uri($"https://dev.azure.com/{config.Organization}/{config.Project}/_apis/");
-
-                            var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($":{config.PersonalAccessToken}"));
-                            client.DefaultRequestHeaders.Authorization =
-                                new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
-                        });
-
-                        // Register application services
-                        // Stateless services - use Transient
-                        services.AddTransient<IFileHandler, FileHandler>();
-                        services.AddTransient<ITestProcessor, TestProcessor>();
-                        services.AddTransient<ITestCaseValidator, TestCaseValidator>();
-
-                        // HttpClient-based service - lifetime managed by AddHttpClient
+                        // Register HttpClient-based service - lifetime managed by AddHttpClient
                         services.AddHttpClient<ITestUpdateService, AzureDevOpsService>((serviceProvider, client) =>
                         {
                             var config = serviceProvider.GetRequiredService<IOptions<AzureOptions>>().Value;
@@ -86,6 +74,11 @@ namespace TestRunner
                             policy.WaitAndRetryAsync(3, retryAttempt =>
                                 TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))))
                         .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(30)));
+
+                        // Register application services
+                        services.AddTransient<IFileHandler, FileHandler>();
+                        services.AddTransient<ITestProcessor, TestProcessor>();
+                        services.AddTransient<ITestCaseValidator, TestCaseValidator>();
 
                         // Parsers can be Singleton (stateless)
                         services.AddSingleton<ITestCaseParser, ReqnRollParser>();

@@ -23,6 +23,8 @@ namespace TestRunner
                 ? Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\", options.TestFilesPath))
                 : options.TestFilesPath;
 
+            logger.LogInformation("Processing test files from path: {Path}", path);
+
             var testCases = await testProcessor.ProcessFilesAsync(path, cancellationToken);
 
             int successCount = 0;
