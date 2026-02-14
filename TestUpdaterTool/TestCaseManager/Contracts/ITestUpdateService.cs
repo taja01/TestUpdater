@@ -4,6 +4,6 @@ namespace TestCaseManager.Contracts
 {
     public interface ITestUpdateService
     {
-        Task UpdateTestCaseStepsAsync(int testCaseId, List<TestStep> testSteps, string title);
+        Task UpdateTestCaseStepsAsync(int testCaseId, List<TestStep> testSteps, string title, CancellationToken cancellationToken = default);
     }
 }

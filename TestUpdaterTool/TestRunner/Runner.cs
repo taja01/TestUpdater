@@ -44,7 +44,8 @@ namespace TestRunner
                     await updater.UpdateTestCaseStepsAsync(
                         testCase.TestCaseId!.Value,
                         testCase.Steps,
-                        testCase.Title!);
+                        testCase.Title!,
+                        cancellationToken);
 
                     successCount++;
                     logger.LogInformation("Successfully updated test case '{Title}' (ID: {TestCaseId})",
