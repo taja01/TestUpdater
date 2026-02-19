@@ -14,7 +14,7 @@ namespace TestParser.Parsers
         public Task<List<ParsedTest>> ParseFileAsync(string path, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            
+
             var parser = new Parser();
             var gherkinDocument = parser.Parse(path);
 
@@ -74,6 +74,9 @@ namespace TestParser.Parsers
             parsedScenario.Title = scenario.Name;
             parsedScenario.TestCaseId = GetTestCaseIdFromTags(scenario.Tags);
 
+            // Extract tags (excluding @TC tag)
+            parsedScenario.Tags = ExtractTags(scenario.Tags);
+
             // Process the steps in the scenario
             ParseScenarioSteps(scenario.Steps, parsedScenario);
 
@@ -89,6 +92,15 @@ namespace TestParser.Parsers
                 return testCaseId;
             }
             return null;
+        }
+
+        private static List<string> ExtractTags(IEnumerable<Tag> tags)
+        {
+            // Extract all tags except @TC tags
+            return tags
+                .Where(tag => !tag.Name.StartsWith("@TC", StringComparison.OrdinalIgnoreCase))
+                .Select(tag => tag.Name.TrimStart('@'))
+                .ToList();
         }
 
         private static void ParseScenarioSteps(IEnumerable<Step> steps, ParsedTest parsedScenario)

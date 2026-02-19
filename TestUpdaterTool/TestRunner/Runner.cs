@@ -23,7 +23,7 @@ namespace TestRunner
                 ? Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\", options.TestFilesPath))
                 : options.TestFilesPath;
 
-            logger.LogInformation("Processing test files from path: {Path}", path);
+            logger.LogInformation("Processing test files from: {Path}", path);
 
             var testCases = await testProcessor.ProcessFilesAsync(path, cancellationToken);
 
@@ -47,18 +47,31 @@ namespace TestRunner
                         testCase.TestCaseId!.Value,
                         testCase.Steps,
                         testCase.Title!,
+                        testCase.Tags.Count > 0 ? testCase.Tags : null,
                         cancellationToken);
 
                     successCount++;
-                    logger.LogInformation("Successfully updated test case '{Title}' (ID: {TestCaseId})",
+                    logger.LogInformation("Successfully updated test case '{Title}' (ID: {TestCaseId}) with {TagCount} tags",
                         testCase.Title,
-                        testCase.TestCaseId);
+                        testCase.TestCaseId,
+                        testCase.Tags.Count);
+                }
+                catch (HttpRequestException httpEx)
+                {
+                    logger.LogError(httpEx, "HTTP error updating test case '{Title}' (ID: {TestCaseId}): {Message}",
+                        testCase.Title, testCase.TestCaseId, httpEx.Message);
+                    failedCount++;
+                }
+                catch (TaskCanceledException)
+                {
+                    logger.LogWarning("Update cancelled for test case '{Title}' (ID: {TestCaseId})",
+                        testCase.Title, testCase.TestCaseId);
+                    throw;
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Failed to update test case '{Title}' (ID: {TestCaseId})",
-                        testCase.Title,
-                        testCase.TestCaseId);
+                    logger.LogError(ex, "Unexpected error updating test case '{Title}' (ID: {TestCaseId})",
+                        testCase.Title, testCase.TestCaseId);
                     failedCount++;
                 }
             }

@@ -329,6 +329,11 @@ Built with:
 - [Gherkin](https://github.com/cucumber/gherkin) - Gherkin parser
 - [Newtonsoft.Json](https://www.newtonsoft.com/json) - JSON serialization
 
+## Read
+- [Azure DevOps REST API Documentation](https://learn.microsoft.com/en-us/rest/api/azure/devops/)
+- [Best Practices for Azure DevOps Test Management](https://learn.microsoft.com/en-us/azure/devops/test/overview?view=azure-devops)
+- [Securely Managing Secrets in .NET](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-10.0&tabs=windows)
+- [Azure DevOps Workitem Fields](https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/fields/list?view=azure-devops-rest-7.1&tabs=HTTP)
 ---
 
 **Made with ❤️ for test automation engineers**

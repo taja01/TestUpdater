@@ -41,6 +41,7 @@ namespace TestParser.Services
         {
             logger.LogDebug("Title: {Title}", parsedTest.Title);
             logger.LogDebug("TestCaseId: {TestCaseId}", parsedTest.TestCaseId);
+            logger.LogDebug("Tags: {TestCaseId}", parsedTest.Tags);
 
             foreach (var step in parsedTest.Steps)
             {

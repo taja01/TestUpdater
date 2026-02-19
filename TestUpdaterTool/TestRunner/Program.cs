@@ -57,7 +57,7 @@ namespace TestRunner
                         services.AddTransient<ITestCaseValidator, TestCaseValidator>();
 
                         // Parsers can be Singleton (stateless)
-                        services.AddSingleton<ITestCaseParser, ReqnRollParser>();
+                        services.AddSingleton<ITestCaseParser, TypeScriptParserV2>();
 
                         // Add the runner as a hosted service
                         services.AddHostedService<Runner>();

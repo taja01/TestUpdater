@@ -20,20 +20,26 @@ namespace TestCaseManager.Services
             _options = options.Value;
             _httpClient = httpClient;
 
-            // Remove BaseAddress and Authorization - configured in Program.cs
             _logger.LogInformation("AzureDevOpsService initialized for Organization: {Organization}, Project: {Project}",
                 _options.Organization,
                 _options.Project);
         }
 
         /// <summary>
-        /// Updates a test case in Azure DevOps with custom test steps.
+        /// Updates a test case in Azure DevOps with custom test steps and tags.
         /// </summary>
         /// <param name="testCaseId">The ID of the test case to update.</param>
         /// <param name="testSteps">The test steps object to represent actions and expected results.</param>
         /// <param name="title">Test Title</param>
+        /// <param name="tags">Optional tags to add to the test case</param>
+        /// <param name="cancellationToken">Cancellation token</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public async Task UpdateTestCaseStepsAsync(int testCaseId, List<TestStep> testSteps, string title, CancellationToken cancellationToken)
+        public async Task UpdateTestCaseStepsAsync(
+            int testCaseId,
+            List<TestStep> testSteps,
+            string title,
+            List<string>? tags = null,
+            CancellationToken cancellationToken = default)
         {
             if (testSteps == null || testSteps.Count == 0)
             {
@@ -46,13 +52,23 @@ namespace TestCaseManager.Services
             // Build test steps string in format understood by Azure DevOps
             var stepsFieldValue = BuildTestStepsValue(testSteps);
 
-            // Prepare patch document
-            var patchDocument = new[]
+            // Build patch document
+            var patchDocument = new List<object>
             {
-                new { op = "add", path = "/fields/System.Title", value = title},
-                new { op = "add", path = "/fields/Microsoft.VSTS.TCM.AutomationStatus", value = "Planned"},
+                new { op = "add", path = "/fields/System.Title", value = title },
+                new { op = "add", path = "/fields/Microsoft.VSTS.TCM.AutomationStatus", value = "Planned" },
                 new { op = "add", path = "/fields/Microsoft.VSTS.TCM.Steps", value = stepsFieldValue }
             };
+
+            // Add tags if provided
+            if (tags != null && tags.Count > 0)
+            {
+                // Azure DevOps expects tags as semicolon-separated string
+                var tagsValue = string.Join("; ", tags.Select(t => t.Trim()));
+                patchDocument.Add(new { op = "add", path = "/fields/System.Tags", value = tagsValue });
+
+                _logger.LogDebug("Adding tags to Test Case ID {TestCaseId}: {Tags}", testCaseId, tagsValue);
+            }
 
             try
             {
@@ -69,7 +85,6 @@ namespace TestCaseManager.Services
                     _logger.LogError("Failed to update Test Case ID {TestCaseId}. Status Code: {StatusCode}. Error: {Error}",
                         testCaseId, response.StatusCode, errorMessage);
 
-                    // Throw exception so Runner knows update failed
                     throw new HttpRequestException($"Failed to update Test Case ID {testCaseId}. Status: {response.StatusCode}. Error: {errorMessage}");
                 }
             }
